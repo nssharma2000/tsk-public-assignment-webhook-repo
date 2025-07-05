@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook</title>
+</head>
+<body>
+    <div id="heading">
+        Events
+    </div>
+    <div id="events">
+
+    </div>
+<style>
+    #heading
+    {
+        margin: auto auto;
+        font-size: 3rem;
+        text-align: center;  
+    }
+</style>
+<script>
+    async function fetchEvents()
+    {
+        const response = await fetch("/get_events")
+        const events = await response.json()
+        const parent = document.getElementById("events")
+
+
+        for(let i = 0; i < events.length; i++)
+        {
+            const event = events[i]
+            let msg = "";
+            if (event.type === "push") {
+            msg = `${event.author} pushed to ${event.to_branch} on ${event.timestamp}`;
+            }
+
+            else if(event.type === "pull_request") 
+            {
+            msg = `${event.author} submitted a pull request from ${event.from_branch} to ${event.to_branch} on ${event.timestamp}`;
+            }
+
+            else if(event.type === "merge") 
+            {
+            msg = `${event.author} merged branch ${event.from_branch} to ${event.to_branch} on ${event.timestamp}`;
+            }
+
+            const element = document.createElement("p");
+            element.textContent = msg;
+            parent.appendChild(element);
+        }
+    }
+
+    fetchEvents()
+
+    setInterval(fetchEvents, 15000)
+</script>
+</body>
+</html>
