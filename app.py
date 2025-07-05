@@ -25,7 +25,7 @@ def webhook():
     event_type = request.headers.get('X-GitHub-Event')
 
     event = {}
-    now = datetime.now()    #Current date and time
+    now = datetime.now()                      #Current date and time
 
     if event_type == "push":
         event = {                                            
@@ -47,7 +47,7 @@ def webhook():
                 "from_branch": pr['head']['ref'],
                 "to_branch": pr['base']['ref'],
                 "timestamp": now
-            } #Data for pull request
+            }                                       #Data for pull request
 
         elif action == "closed" and pr.get("merged", False):
             event = {
@@ -56,7 +56,7 @@ def webhook():
                 "from_branch": pr['head']['ref'],
                 "to_branch": pr['base']['ref'],
                 "timestamp": now
-            }  #Data for merge event
+            }                                       #Data for merge event
 
         else:
             return jsonify({"msg": "PR event ignored"}), 200
@@ -64,11 +64,11 @@ def webhook():
     else:
         return jsonify({"msg": "Event type ignored"}), 200
 
-    collection.insert_one(event)         #Saving event to collection
+    collection.insert_one(event)                                #Saving event to collection
     return jsonify({"Message": "Event stored"}), 200
 
 
-@app.route("/get_events", methods=["GET"])   #Route for getting events
+@app.route("/get_events", methods=["GET"])                      #Route for getting events
 def get_events():
     results = []
     events = collection.find().sort("timestamp", -1).limit(10)  #Fetching events from collection, sorted in descending order (only the first 10 events)
