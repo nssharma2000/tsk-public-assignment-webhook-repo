@@ -19,6 +19,12 @@
         font-size: 3rem;
         text-align: center;  
     }
+
+    .event
+    {
+        text-align: center;
+    }
+
 </style>
 <script>
     async function fetchEvents()
@@ -47,7 +53,9 @@
             }
 
             const element = document.createElement("p");
+            element.className = "event"
             element.textContent = msg;
+
             parent.appendChild(element);
         }
     }
