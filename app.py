@@ -99,7 +99,6 @@ def get_events():
 
     #Fetching events from collection, sorted in descending order (only the first 10 events)
     events = collection.find().sort("timestamp", -1).limit(10)
-    print(events)  
     for e in events:
         timestamp_str = format_timestamp(e["timestamp"])
         key = f"{e['type']}:{e.get('author')}:{timestamp_str}"
