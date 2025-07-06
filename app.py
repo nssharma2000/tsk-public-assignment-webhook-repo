@@ -12,21 +12,37 @@ client = MongoClient("mongodb+srv://nssharma2000:nama1234@cluster0.oelsdrp.mongo
 db = client["ts_database"]
 collection = db["events"]
 
-seen_timestamps = set()
+def format_timestamp(dt):
+    
+    #Format  datetime object 
+    day = dt.day
+
+    # Handle suffix logic
+    if 11 <= day <= 13:
+        suffix = "th"
+    else:
+        suffix = {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
+    
+    # Format full string
+    return f"{day}{suffix} {dt.strftime('%B %Y - %I:%M %p')} UTC"
 
 @app.route("/")
 def home():
     return send_from_directory(app.static_folder, "index.html")
 
 
-@app.route("/webhook", methods=["POST"])     #Route for app to be notified of events
+#Route for app to be notified of events
+@app.route("/webhook", methods=["POST"])     
 def webhook():
     data = request.json
     event_type = request.headers.get('X-GitHub-Event')
 
     event = {}
-    now = datetime.now()                      #Current date and time
 
+    #Current date and time
+    now = datetime.now(timezone.utc)                   
+
+    #Data for push event
     if event_type == "push":
         event = {                                            
             "type": "push",
@@ -34,12 +50,14 @@ def webhook():
             "from_branch": None,
             "to_branch": data['ref'].split('/')[-1],
             "timestamp": now
-        }  #Data for push event
+        }  
 
     elif event_type == "pull_request":
         action = data['action']
         pr = data['pull_request']
 
+
+        #Data for pull request
         if action == "opened":
             event = {
                 "type": "pull_request",
@@ -47,8 +65,9 @@ def webhook():
                 "from_branch": pr['head']['ref'],
                 "to_branch": pr['base']['ref'],
                 "timestamp": now
-            }                                       #Data for pull request
+            }                                       
 
+        #Data for merge event
         elif action == "closed" and pr.get("merged", False):
             event = {
                 "type": "merge",
@@ -56,7 +75,7 @@ def webhook():
                 "from_branch": pr['head']['ref'],
                 "to_branch": pr['base']['ref'],
                 "timestamp": now
-            }                                       #Data for merge event
+            }                                       
 
         else:
             return jsonify({"msg": "PR event ignored"}), 200
@@ -64,16 +83,25 @@ def webhook():
     else:
         return jsonify({"msg": "Event type ignored"}), 200
 
-    collection.insert_one(event)                                #Saving event to collection
+    #Saving event to collection
+    collection.insert_one(event)                                
     return jsonify({"Message": "Event stored"}), 200
 
 
-@app.route("/get_events", methods=["GET"])                      #Route for getting events
+#Route for getting events
+@app.route("/get_events", methods=["GET"])                      
 def get_events():
+
+    seen_timestamps = set()
+
+    
     results = []
-    events = collection.find().sort("timestamp", -1).limit(10)  #Fetching events from collection, sorted in descending order (only the first 10 events)
+
+    #Fetching events from collection, sorted in descending order (only the first 10 events)
+    events = collection.find().sort("timestamp", -1).limit(10)
+    print(events)  
     for e in events:
-        timestamp_str = e["timestamp"].strftime('%-d %B %Y - %-I:%M %p UTC')
+        timestamp_str = format_timestamp(e["timestamp"])
         key = f"{e['type']}:{e.get('author')}:{timestamp_str}"
         if key not in seen_timestamps:
             seen_timestamps.add(key)
